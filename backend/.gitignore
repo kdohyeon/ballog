@@ -1,0 +1,15 @@
+
+# Gradle
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Kotlin
+.kotlin
+
+# IDEA
+.idea
+*.iml
+
+# Environment Variables
+.env
