@@ -6,9 +6,34 @@ A comprehensive service for recording and archiving baseball game attendance exp
 
 This is a monorepo containing:
 
-- **`/backend`**: Spring Boot application (Kotlin) serving the REST API.
-- **`/admin-web`**: Next.js (App Router) administration panel for managing data.
-- **`init_schema.sql`**: Database schema initialization script for Supabase (PostgreSQL).
+```
+.
+├── admin-web/          # Admin Panel (Next.js 14, Ant Design, Tailwind CSS)
+│   ├── public/         # Static assets
+│   ├── src/
+│   │   ├── app/        # App Router pages and layouts
+│   │   ├── lib/        # Shared libraries (Supabase, API clients, Registry)
+│   │   ├── types/      # TypeScript type definitions
+│   │   └── ...
+│   ├── next.config.js  # Next.js configuration
+│   ├── tailwind.config.js # Tailwind CSS configuration
+│   └── ...
+├── backend/            # Backend API (Spring Boot 3.2, Kotlin)
+│   ├── src/
+│   │   └── main/
+│   │       ├── kotlin/com/ballog/backend/
+│   │       │   ├── config/      # Configuration classes
+│   │       │   ├── controller/  # REST Controllers
+│   │       │   ├── dto/         # Data Transfer Objects
+│   │       │   ├── entity/      # JPA Entities
+│   │       │   ├── repository/  # Data Repositories
+│   │       │   └── service/     # Business Logic
+│   │       └── resources/       # Application properties
+│   ├── build.gradle.kts # Gradle build script
+│   └── ...
+├── init_schema.sql     # Database initialization script
+└── README.md           # Project documentation
+```
 
 ## Getting Started
 
