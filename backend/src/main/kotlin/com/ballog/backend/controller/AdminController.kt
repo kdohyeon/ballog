@@ -21,6 +21,11 @@ class AdminController(
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) endDate: LocalDate
     ): ResponseEntity<String> {
         kboCrawlerService.crawlSchedule(startDate, endDate)
-        return ResponseEntity.ok("Crawling initiated from $startDate to $endDate")
+        return ResponseEntity.accepted().body("Crawling initiated in background from $startDate to $endDate")
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/crawl/progress", produces = [org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE])
+    fun streamProgress(): org.springframework.web.servlet.mvc.method.annotation.SseEmitter {
+        return kboCrawlerService.subscribe()
     }
 }

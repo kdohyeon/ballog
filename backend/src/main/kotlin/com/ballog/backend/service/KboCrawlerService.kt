@@ -15,6 +15,7 @@ import org.springframework.web.client.RestClient
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import org.springframework.scheduling.annotation.Async
 
 @Service
 class KboCrawlerService(
@@ -29,12 +30,62 @@ class KboCrawlerService(
         .defaultHeader("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
         .build()
 
+    private val emitters = java.util.concurrent.CopyOnWriteArrayList<org.springframework.web.servlet.mvc.method.annotation.SseEmitter>()
+
+    fun subscribe(): org.springframework.web.servlet.mvc.method.annotation.SseEmitter {
+        val emitter = org.springframework.web.servlet.mvc.method.annotation.SseEmitter(300_000L) // 5 min timeout
+        this.emitters.add(emitter)
+        
+        emitter.onCompletion { this.emitters.remove(emitter) }
+        emitter.onTimeout { this.emitters.remove(emitter) }
+        
+        return emitter
+    }
+
+    private fun broadcastProgress(message: String, percent: Int) {
+        val event = mapOf("message" to message, "percent" to percent)
+        val deadEmitters = mutableListOf<org.springframework.web.servlet.mvc.method.annotation.SseEmitter>()
+        
+        this.emitters.forEach { emitter ->
+            try {
+                emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event().name("progress").data(event))
+            } catch (e: Exception) {
+                deadEmitters.add(emitter)
+            }
+        }
+        this.emitters.removeAll(deadEmitters)
+    }
+
+    @Async
     @Transactional
     fun crawlSchedule(startDate: LocalDate, endDate: LocalDate) {
         logger.info("Starting KBO schedule crawl from $startDate to $endDate")
+        broadcastProgress("Starting crawl...", 0)
         
-        val url = "/schedule/games?fields=basic,super_match&baseballScheduleCategory=kbo&categoryId=kbo&fromDate=$startDate&toDate=$endDate"
+        val totalDays = java.time.temporal.ChronoUnit.DAYS.between(startDate, endDate) + 1
+        var daysProcessed = 0L
         
+        var currentStart = startDate
+        while (!currentStart.isAfter(endDate)) {
+            // Crawl day by day to avoid limit (Naver returns max ~10 items)
+            val currentEnd = currentStart // Start = End (1 day)
+            
+            crawlRange(currentStart, currentEnd)
+            
+            daysProcessed++
+            val percent = ((daysProcessed.toDouble() / totalDays) * 100).toInt()
+            broadcastProgress("Processed $daysProcessed / $totalDays days", percent)
+            
+            currentStart = currentEnd.plusDays(1)
+        }
+        
+        broadcastProgress("Crawl completed!", 100)
+    }
+
+    private fun crawlRange(start: LocalDate, end: LocalDate) {
+        val url = "/schedule/games?fields=basic,super_match&baseballScheduleCategory=kbo&categoryId=kbo&fromDate=$start&toDate=$end"
+        logger.info("Crawling range: $start ~ $end")
+
         try {
             val response = restClient.get()
                 .uri(url)
@@ -42,7 +93,7 @@ class KboCrawlerService(
                 .body(NaverScheduleResponse::class.java)
 
             val games = response?.result?.games ?: emptyList()
-            logger.info("Fetched ${games.size} games from Naver Sports")
+            logger.info("Fetched ${games.size} games from Naver Sports ($start ~ $end)")
 
             games.forEach { 
                 try {
@@ -53,13 +104,12 @@ class KboCrawlerService(
             }
             
         } catch (e: Exception) {
-            logger.error("Failed to crawl schedule: ${e.message}")
-            // throw e
+            logger.error("Failed to crawl schedule ($start ~ $end): ${e.message}")
         }
     }
 
     private fun processGame(dto: NaverGameDto) {
-        logger.info("Processing game ${dto.gameId}: ${dto.homeTeamName} vs ${dto.awayTeamName} (Date: ${dto.gameDateTime})")
+        logger.info("Processing game ${dto.gameId}: ${dto.homeTeamName} vs ${dto.awayTeamName} (Date: ${dto.gameDateTime}, Status: ${dto.statusCode}, Cancel: ${dto.cancel})")
         val homeTeam = findTeam(dto.homeTeamName)
         val awayTeam = findTeam(dto.awayTeamName)
         
@@ -75,7 +125,7 @@ class KboCrawlerService(
             gameDateTime, homeTeam, awayTeam
         )
 
-        val status = mapStatus(dto.statusCode)
+        val status = mapStatus(dto.statusCode, dto.cancel)
         val homeScore = dto.homeTeamScore ?: 0
         val awayScore = dto.awayTeamScore ?: 0
 
@@ -111,7 +161,9 @@ class KboCrawlerService(
         }
     }
 
-    private fun mapStatus(naverStatus: String): GameStatus {
+    private fun mapStatus(naverStatus: String, cancel: Boolean): GameStatus {
+        if (cancel) return GameStatus.CANCELED
+        
         return when (naverStatus.uppercase()) {
             "BEFORE" -> GameStatus.SCHEDULED
             "LIVE" -> GameStatus.IN_PROGRESS
