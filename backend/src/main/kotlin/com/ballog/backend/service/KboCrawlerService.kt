@@ -4,6 +4,7 @@ import com.ballog.backend.dto.NaverGameDto
 import com.ballog.backend.dto.NaverScheduleResponse
 import com.ballog.backend.entity.Game
 import com.ballog.backend.entity.GameStatus
+import com.ballog.backend.entity.Team
 import com.ballog.backend.repository.GameRepository
 import com.ballog.backend.repository.StadiumRepository
 import com.ballog.backend.repository.TeamRepository
@@ -58,8 +59,9 @@ class KboCrawlerService(
     }
 
     private fun processGame(dto: NaverGameDto) {
-        val homeTeam = teamRepository.findByName(dto.homeTeamName)
-        val awayTeam = teamRepository.findByName(dto.awayTeamName)
+        logger.info("Processing game ${dto.gameId}: ${dto.homeTeamName} vs ${dto.awayTeamName} (Date: ${dto.gameDateTime})")
+        val homeTeam = findTeam(dto.homeTeamName)
+        val awayTeam = findTeam(dto.awayTeamName)
         
         if (homeTeam == null || awayTeam == null) {
             logger.warn("Skipping game ${dto.gameId}: Teams not found (${dto.homeTeamName} vs ${dto.awayTeamName})")
@@ -118,5 +120,23 @@ class KboCrawlerService(
             "SUSPEND" -> GameStatus.SUSPENDED
             else -> GameStatus.SCHEDULED // Default
         }
+    }
+
+    private fun findTeam(name: String): Team? {
+        return teamRepository.findByName(name)
+            ?: teamRepository.findByShortName(name)
+            ?: when(name.uppercase()) {
+                "KT" -> teamRepository.findByName("kt wiz")
+                "KIA" -> teamRepository.findByName("KIA Tigers")
+                "SSG" -> teamRepository.findByName("SSG Landers")
+                "NC" -> teamRepository.findByName("NC Dinos")
+                "LG" -> teamRepository.findByName("LG Twins")
+                "두산" -> teamRepository.findByName("Doosan Bears")
+                "키움" -> teamRepository.findByName("Kiwoom Heroes")
+                "롯데" -> teamRepository.findByName("Lotte Giants")
+                "삼성" -> teamRepository.findByName("Samsung Lions")
+                "한화" -> teamRepository.findByName("Hanwha Eagles")
+                else -> null
+            }
     }
 }

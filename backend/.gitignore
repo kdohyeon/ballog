@@ -13,3 +13,7 @@ build/
 
 # Environment Variables
 .env
+
+# Logs and DB
+*.log
+*.db

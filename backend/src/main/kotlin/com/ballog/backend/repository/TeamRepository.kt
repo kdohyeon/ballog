@@ -6,5 +6,6 @@ import java.util.UUID
 
 interface TeamRepository : JpaRepository<Team, UUID> {
     fun findByName(name: String): Team?
+    fun findByShortName(shortName: String): Team?
     fun findByCode(code: String): Team?
 }

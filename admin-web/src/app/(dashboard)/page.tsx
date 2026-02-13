@@ -1,16 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Layout, Typography, Card, DatePicker, Button, Table, Tag, Space, message, Row, Col } from 'antd';
-import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+import { Card, DatePicker, Button, Table, Tag, Space, message, Row, Col } from 'antd';
+import { ReloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { crawlSchedule, fetchMonthlyGames } from '@/lib/api'; // Check path
+import { crawlSchedule, fetchMonthlyGames } from '@/lib/api';
 import { Game, GameStatus } from '@/types';
 
-const { Header, Content, Footer } = Layout;
-const { Title } = Typography;
 const { RangePicker } = DatePicker;
 
 export default function Dashboard() {
@@ -86,6 +84,7 @@ export default function Dashboard() {
             title: '구장',
             dataIndex: ['stadium', 'name'],
             key: 'stadium',
+            render: (stadium: any) => stadium ? stadium : '-',
         },
     ];
 
@@ -98,70 +97,58 @@ export default function Dashboard() {
     };
 
     return (
-        <Layout className="min-h-screen">
-            <Header className="flex items-center bg-white border-b px-6">
-                <div className="text-xl font-bold mr-4">Ballog Admin</div>
-            </Header>
-            <Content className="p-6 bg-gray-50">
-                <div className="max-w-7xl mx-auto space-y-6">
-
-                    {/* Controls Section */}
-                    <Card title="경기 데이터 관리" className="shadow-sm">
-                        <Row gutter={24} align="middle">
-                            <Col span={12}>
-                                <Space direction="vertical">
-                                    <span className="text-gray-500 text-sm">데이터 수집 (Naver Sports)</span>
-                                    <Space>
-                                        <RangePicker
-                                            value={crawlRange}
-                                            onChange={(dates) => setCrawlRange(dates as [Dayjs, Dayjs])}
-                                        />
-                                        <Button
-                                            type="primary"
-                                            onClick={handleCrawl}
-                                            loading={crawlMutation.isPending}
-                                            icon={<ReloadOutlined />}
-                                        >
-                                            크롤링 실행
-                                        </Button>
-                                    </Space>
-                                </Space>
-                            </Col>
-                            <Col span={12} className="text-right">
-                                {/* Visual balance */}
-                            </Col>
-                        </Row>
-                    </Card>
-
-                    {/* Data View Section */}
-                    <Card
-                        title={
+        <div className="space-y-6">
+            {/* Controls Section */}
+            <Card title="경기 데이터 관리" className="shadow-sm">
+                <Row gutter={24} align="middle">
+                    <Col span={12}>
+                        <Space direction="vertical">
+                            <span className="text-gray-500 text-sm">데이터 수집 (Naver Sports)</span>
                             <Space>
-                                <span>경기 목록 조회</span>
-                                <DatePicker
-                                    picker="month"
-                                    value={viewMonth}
-                                    onChange={(date) => date && setViewMonth(date)}
-                                    allowClear={false}
+                                <RangePicker
+                                    value={crawlRange}
+                                    onChange={(dates) => setCrawlRange(dates as [Dayjs, Dayjs])}
                                 />
+                                <Button
+                                    type="primary"
+                                    onClick={handleCrawl}
+                                    loading={crawlMutation.isPending}
+                                    icon={<ReloadOutlined />}
+                                >
+                                    크롤링 실행
+                                </Button>
                             </Space>
-                        }
-                        className="shadow-sm"
-                    >
-                        <Table
-                            dataSource={games}
-                            columns={columns}
-                            rowKey="id"
-                            loading={isLoading}
-                            pagination={{ pageSize: 15 }}
-                        />
-                    </Card>
+                        </Space>
+                    </Col>
+                    <Col span={12} className="text-right">
+                        {/* Visual balance */}
+                    </Col>
+                </Row>
+            </Card>
 
-                </div>
-            </Content>
-            <Footer className="text-center text-gray-500">
-                Ballog Admin ©{new Date().getFullYear()}
-            </Footer>
-        </Layout>
+            {/* Data View Section */}
+            <Card
+                title={
+                    <Space>
+                        <span>경기 목록 조회</span>
+                        <DatePicker
+                            picker="month"
+                            value={viewMonth}
+                            onChange={(date) => date && setViewMonth(date)}
+                            allowClear={false}
+                        />
+                    </Space>
+                }
+                className="shadow-sm"
+            >
+                <Table
+                    dataSource={games}
+                    columns={columns}
+                    rowKey="id"
+                    loading={isLoading}
+                    pagination={{ pageSize: 15 }}
+                />
+            </Card>
+        </div>
     );
 }
