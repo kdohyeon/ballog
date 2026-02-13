@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import StyledComponentsRegistry from '@/lib/AntdRegistry';
 import QueryProvider from '@/lib/QueryProvider';
 import AntdConfigProvider from '@/lib/AntdConfigProvider';
+import { AuthProvider } from '@/lib/AuthContext';
 import './globals.css';
 import { Layout } from 'antd';
 
@@ -24,9 +25,11 @@ export default function RootLayout({
                 <StyledComponentsRegistry>
                     <QueryProvider>
                         <AntdConfigProvider>
-                            <Layout style={{ minHeight: '100vh' }}>
-                                {children}
-                            </Layout>
+                            <AuthProvider>
+                                <Layout style={{ minHeight: '100vh' }}>
+                                    {children}
+                                </Layout>
+                            </AuthProvider>
                         </AntdConfigProvider>
                     </QueryProvider>
                 </StyledComponentsRegistry>
