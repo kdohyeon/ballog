@@ -16,3 +16,10 @@ spring:
         temp:
           use_jdbc_metadata_defaults: false
     show-sql: true
+
+# CORS: comma-separated origin patterns
+# Dev default allows all; in production set APP_CORS_ALLOWED_ORIGIN_PATTERNS env var
+# e.g. "https://ballog.com,https://*.ballog.com"
+app:
+  cors:
+    allowed-origin-patterns: ${APP_CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:3000,http://localhost:8081,http://localhost:19006,*}

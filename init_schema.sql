@@ -59,6 +59,9 @@ CREATE TABLE IF NOT EXISTS records (
     game_id UUID NOT NULL REFERENCES games(id),
     supported_team_id UUID REFERENCES teams(id),
     result_snapshot VARCHAR(20), -- 'WIN', 'LOSE', 'DRAW', 'CANCELED' snapshot at record time
+    seat_info VARCHAR(255),
+    content TEXT,
+    ticket_image_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     
     CONSTRAINT unique_member_game_record UNIQUE (member_id, game_id)

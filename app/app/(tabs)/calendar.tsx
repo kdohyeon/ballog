@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, ActivityIndicator, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { Calendar, LocaleConfig, DateData } from 'react-native-calendars';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from 'expo-router';
 import { useCalendarData, CalendarGame } from '../../hooks/useCalendarData';
 import { useTeamStore } from '../../store/useTeamStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import MatchCard from '../../components/MatchCard';
+import RecordModal from '../../components/RecordModal';
 
 // Configure Korean Locale
 LocaleConfig.locales['ko'] = {
@@ -19,9 +22,21 @@ LocaleConfig.locales['ko'] = {
 LocaleConfig.defaultLocale = 'ko';
 
 export default function CalendarScreen() {
-    const { markedDates, loading } = useCalendarData();
+    const { markedDates, loading, refresh } = useCalendarData();
     const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const { myTeam } = useTeamStore();
+    const { memberId } = useAuthStore();
+
+    // Refresh data when tab is focused (e.g. after record creation/edit elsewhere)
+    useFocusEffect(
+        React.useCallback(() => {
+            refresh();
+        }, [refresh])
+    );
+
+    // Modal state
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedGame, setSelectedGame] = useState<CalendarGame | null>(null);
 
     // Helper: check if a game involves my team (name-based, since store IDs ≠ DB IDs)
     const myTeamName = myTeam?.name?.toLowerCase();
@@ -42,6 +57,65 @@ export default function CalendarScreen() {
         if (!aIsMine && bIsMine) return 1;
         return new Date(a.game_date_time).getTime() - new Date(b.game_date_time).getTime();
     });
+
+    const handleMatchPress = (game: CalendarGame) => {
+        setSelectedGame(game);
+        setModalVisible(true);
+    };
+
+    const handleSaveRecord = async (data: {
+        gameId: string;
+        recordId?: string;
+        seat: string;
+        review: string;
+        imageUri: string | null;
+        supportedTeamId: string | null;
+    }) => {
+        try {
+            const body = {
+                memberId: memberId,
+                gameId: data.gameId,
+                supportedTeamId: data.supportedTeamId || null,
+                seatInfo: data.seat || null,
+                content: data.review || null,
+                ticketImageUrl: data.imageUri || null,
+            };
+            console.log('Sending record to backend:', body);
+
+            const isEdit = !!data.recordId;
+            const url = isEdit
+                ? `http://localhost:8080/api/v1/records/${data.recordId}`
+                : 'http://localhost:8080/api/v1/records';
+
+            const res = await fetch(url, {
+                method: isEdit ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(isEdit ? {
+                    seatInfo: body.seatInfo,
+                    content: body.content,
+                    ticketImageUrl: body.ticketImageUrl
+                } : body),
+            });
+
+            if (res.ok) {
+                const result = await res.json();
+                Alert.alert(
+                    isEdit ? '수정 완료' : '저장 완료',
+                    isEdit ? '직관 기록이 수정되었습니다.' : `직관 기록이 저장되었습니다! 🎉\n결과: ${result.resultSnapshot || '미정'}`
+                );
+                // Refresh calendar data to show new badge or updated info
+                refresh();
+                setModalVisible(false);
+                setSelectedGame(null);
+            } else {
+                const result = await res.json();
+                Alert.alert(isEdit ? '수정 실패' : '저장 실패', result.error || '알 수 없는 오류가 발생했습니다.');
+            }
+        } catch (e) {
+            console.error('Failed to save record:', e);
+            Alert.alert('네트워크 오류', '백엔드 서버에 연결할 수 없습니다.');
+        }
+    };
 
     if (loading && !markedDates) {
         return (
@@ -102,6 +176,7 @@ export default function CalendarScreen() {
                                     game={game}
                                     isMyMatch={isMyMatch}
                                     myTeamName={myTeamName}
+                                    onPress={() => handleMatchPress(game)}
                                 />
                             );
                         })}
@@ -115,6 +190,21 @@ export default function CalendarScreen() {
                     </View>
                 )}
             </View>
+
+            {/* Record Modal */}
+            {selectedGame && (
+                <RecordModal
+                    visible={modalVisible}
+                    onClose={() => {
+                        setModalVisible(false);
+                        setSelectedGame(null);
+                    }}
+                    game={selectedGame}
+                    initialData={selectedGame.record}
+                    onSave={handleSaveRecord}
+                />
+            )}
         </SafeAreaView>
     );
 }
+

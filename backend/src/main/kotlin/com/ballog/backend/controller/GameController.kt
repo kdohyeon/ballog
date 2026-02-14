@@ -14,7 +14,6 @@ import java.time.YearMonth
 
 @RestController
 @RequestMapping("/api/v1/games")
-@org.springframework.web.bind.annotation.CrossOrigin(origins = ["http://localhost:3000"])
 class GameController(
     private val gameRepository: GameRepository
 ) {
