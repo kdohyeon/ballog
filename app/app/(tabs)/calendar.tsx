@@ -120,7 +120,7 @@ export default function CalendarScreen() {
     if (loading && !markedDates) {
         return (
             <View className="flex-1 items-center justify-center bg-white">
-                <ActivityIndicator size="large" color="#FF7E67" />
+                <ActivityIndicator size="large" color={myTeam?.colors.primary || '#FF7E67'} />
             </View>
         );
     }
@@ -128,15 +128,15 @@ export default function CalendarScreen() {
     return (
         <SafeAreaView className="flex-1 bg-white" edges={['top']}>
             <View className="px-4 py-4">
-                <Text className="text-xl font-quicksand-bold text-black mb-4">Calendar</Text>
+                <Text className="text-xl font-quicksand-bold text-black mb-4">일정</Text>
             </View>
 
             <Calendar
                 theme={{
-                    todayTextColor: '#FF7E67',
-                    arrowColor: '#FF7E67',
-                    dotColor: '#FF7E67',
-                    selectedDayBackgroundColor: '#FF7E67',
+                    todayTextColor: myTeam?.colors.primary || '#FF7E67',
+                    arrowColor: myTeam?.colors.primary || '#FF7E67',
+                    dotColor: myTeam?.colors.primary || '#FF7E67',
+                    selectedDayBackgroundColor: myTeam?.colors.primary || '#FF7E67',
                     textDayFontFamily: 'Quicksand_500Medium',
                     textMonthFontFamily: 'Quicksand_700Bold',
                     textDayHeaderFontFamily: 'Quicksand_500Medium',
@@ -151,7 +151,7 @@ export default function CalendarScreen() {
                         ...markedDates[selectedDate],
                         selected: true,
                         disableTouchEvent: true,
-                        selectedColor: '#FF7E67',
+                        selectedColor: myTeam?.colors.primary || '#FF7E67',
                         selectedTextColor: 'white',
                     }
                 }}

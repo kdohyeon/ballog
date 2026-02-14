@@ -6,11 +6,14 @@ import { ArrowLeftRight, Settings, LogOut } from 'lucide-react-native';
 import { useState } from 'react';
 import TeamGrid from '../../components/TeamGrid';
 import { supabase } from '../../lib/supabase';
+import TeamLogo from '../../components/TeamLogo';
 
 export default function MyPage() {
     const { myTeam, setTeam } = useTeamStore();
     const { nickname } = useAuthStore();
     const [isFAModalVisible, setIsFAModalVisible] = useState(false);
+
+    const primaryColor = myTeam?.colors.primary || '#FF7E67';
 
     const handleTransferTeam = async (newTeam: Team) => {
         // 1. Update local state
@@ -52,13 +55,14 @@ export default function MyPage() {
 
                 {/* Profile Card */}
                 <View className="bg-white rounded-3xl p-6 shadow-sm flex-row items-center mb-8">
-                    <View
-                        className="w-20 h-20 rounded-full items-center justify-center mr-6 shadow-inner"
-                        style={{ backgroundColor: myTeam.colors.primary }}
-                    >
-                        <Text className="text-white font-bold text-3xl">
-                            {myTeam.name.substring(0, 1)}
-                        </Text>
+                    <View className="mr-6 shadow-inner">
+                        <TeamLogo
+                            teamName={myTeam.name}
+                            teamCode={myTeam.code}
+                            primaryColor={myTeam.colors.primary}
+                            size={80}
+                            fontSize={30}
+                        />
                     </View>
                     <View>
                         {/* Nickname */}
@@ -69,8 +73,11 @@ export default function MyPage() {
                             <Text className="text-sm font-quicksand-medium text-gray-500 mr-2">
                                 현재 소속
                             </Text>
-                            <View className="bg-orange-50 px-2 py-0.5 rounded-full border border-orange-100">
-                                <Text className="text-[10px] font-quicksand-bold text-ballog-orange">공식 팬</Text>
+                            <View
+                                className="px-2 py-0.5 rounded-full border"
+                                style={{ backgroundColor: `${primaryColor}10`, borderColor: `${primaryColor}30` }}
+                            >
+                                <Text className="text-[10px] font-quicksand-bold" style={{ color: primaryColor }}>공식 팬</Text>
                             </View>
                         </View>
                         <Text className="text-lg font-quicksand-bold text-gray-700 mb-1">
@@ -88,8 +95,11 @@ export default function MyPage() {
                         onPress={() => setIsFAModalVisible(true)}
                         className="flex-row items-center bg-white p-4 rounded-2xl shadow-sm active:bg-gray-50 border border-gray-100"
                     >
-                        <View className="w-10 h-10 rounded-full bg-orange-50 items-center justify-center mr-4">
-                            <ArrowLeftRight size={20} color="#FF7E67" />
+                        <View
+                            className="w-10 h-10 rounded-full items-center justify-center mr-4"
+                            style={{ backgroundColor: `${primaryColor}10` }}
+                        >
+                            <ArrowLeftRight size={20} color={primaryColor} />
                         </View>
                         <View className="flex-1">
                             <Text className="text-lg font-quicksand-bold text-gray-900">

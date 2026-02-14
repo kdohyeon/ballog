@@ -11,8 +11,16 @@ export interface CalendarGame {
     home_score: number | null;
     away_score: number | null;
     status: 'SCHEDULED' | 'IN_PROGRESS' | 'FINISHED' | 'CANCELED' | 'SUSPENDED';
-    home_team: { name: string };
-    away_team: { name: string };
+    home_team: {
+        name: string;
+        code: string;
+        primary_color: string;
+    };
+    away_team: {
+        name: string;
+        code: string;
+        primary_color: string;
+    };
     stadium_id: string;
     record?: {
         id: string;
@@ -102,8 +110,16 @@ export function useCalendarData() {
                 home_score: game.homeScore,
                 away_score: game.awayScore,
                 status: game.status,
-                home_team: { name: game.homeTeamName },
-                away_team: { name: game.awayTeamName },
+                home_team: {
+                    name: game.homeTeamName,
+                    code: game.homeTeamCode,
+                    primary_color: game.homeTeamPrimaryColor
+                },
+                away_team: {
+                    name: game.awayTeamName,
+                    code: game.awayTeamCode,
+                    primary_color: game.awayTeamPrimaryColor
+                },
                 stadium_id: game.stadiumId,
                 record: attendanceMap.get(game.id)
                     ? {

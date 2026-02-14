@@ -1,12 +1,16 @@
 import { Tabs } from 'expo-router';
 import { Home, Calendar, PieChart, User } from 'lucide-react-native';
+import { useTeamStore } from '../../store/useTeamStore';
 
 export default function TabsLayout() {
+    const { myTeam } = useTeamStore();
+    const primaryColor = myTeam?.colors.primary || '#FF7E67';
+
     return (
         <Tabs
             screenOptions={{
                 headerShown: false,
-                tabBarActiveTintColor: '#FF7E67', // ballog-orange
+                tabBarActiveTintColor: primaryColor,
                 tabBarInactiveTintColor: '#CDCDE0',
                 tabBarStyle: {
                     borderTopWidth: 0,
@@ -25,7 +29,7 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="calendar"
                 options={{
-                    title: '캘린더',
+                    title: '일정',
                     tabBarIcon: ({ color }) => <Calendar color={color} size={24} />,
                 }}
             />

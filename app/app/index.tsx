@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, ActivityIndicator, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../lib/supabase';
@@ -39,34 +39,38 @@ export default function LoginScreen() {
 
     return (
         <SafeAreaView className="flex-1 bg-white">
-            <View className="flex-1 justify-between px-6 py-8">
+            <View className="flex-1 justify-between px-8 py-16">
                 {/* ── Branding Section ── */}
-                <View className="flex-1 items-center justify-center">
+                <View className="items-center">
                     {/* Logo */}
-                    <Text className="text-4xl font-quicksand-bold text-ballog-orange mb-6">
+                    <Text className="text-5xl font-quicksand-bold text-ballog-orange mb-8">
                         Ballog
                     </Text>
 
-                    {/* Mascot Placeholder */}
-                    <View className="w-48 h-48 rounded-full bg-orange-50 items-center justify-center mb-6 border-2 border-ballog-orange/20">
-                        <Text className="text-7xl">⚾</Text>
+                    {/* Mascot Illustration (Circular Crop) */}
+                    <View className="w-80 h-80 rounded-full overflow-hidden mb-6 bg-orange-50 items-center justify-center border-4 border-orange-100/50">
+                        <Image
+                            source={require('../assets/images/mascot/ballog_mascot_main.png')}
+                            className="w-80 h-80"
+                            resizeMode="cover"
+                        />
                     </View>
 
                     {/* Tagline */}
-                    <Text className="text-lg text-gray-600 font-quicksand-medium text-center">
-                        야구 직관 기록, 볼로그와 함께!
+                    <Text className="text-xl text-gray-600 font-quicksand-medium text-center">
+                        나만의 승리요정, 볼로그
                     </Text>
                 </View>
 
                 {/* ── Login Buttons Section ── */}
-                <View className="gap-3 mb-4">
+                <View className="w-full gap-4">
                     {/* Apple Login */}
                     <TouchableOpacity
                         onPress={handleAppleLogin}
-                        className="flex-row items-center justify-center bg-black rounded-xl py-4 px-6"
+                        className="w-full flex-row items-center justify-center bg-black rounded-2xl py-5 shadow-sm"
                         activeOpacity={0.8}
                     >
-                        <Text className="text-white text-base font-quicksand-bold">
+                        <Text className="text-white text-lg font-quicksand-bold">
                             Apple로 계속하기
                         </Text>
                     </TouchableOpacity>
@@ -74,11 +78,11 @@ export default function LoginScreen() {
                     {/* Kakao Login */}
                     <TouchableOpacity
                         onPress={handleKakaoLogin}
-                        className="flex-row items-center justify-center rounded-xl py-4 px-6"
+                        className="w-full flex-row items-center justify-center rounded-2xl py-5 shadow-sm"
                         style={{ backgroundColor: '#FEE500' }}
                         activeOpacity={0.8}
                     >
-                        <Text className="text-black text-base font-quicksand-bold">
+                        <Text className="text-black text-lg font-quicksand-bold">
                             💬 카카오로 계속하기
                         </Text>
                     </TouchableOpacity>
@@ -87,7 +91,7 @@ export default function LoginScreen() {
                     <TouchableOpacity
                         onPress={handleDevLogin}
                         disabled={loading}
-                        className="flex-row items-center justify-center border-2 border-dashed border-gray-300 rounded-xl py-4 px-6 mt-2"
+                        className="w-full flex-row items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl py-4 mt-2"
                         activeOpacity={0.7}
                     >
                         {loading ? (

@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useFocusEffect } from 'expo-router';
 import RecordModal from '../../components/RecordModal';
+import TeamLogo from '../../components/TeamLogo';
 
 interface RecordItem {
     id: string;
@@ -32,6 +33,8 @@ export default function HomeScreen() {
     const { memberId } = useAuthStore();
     const [records, setRecords] = useState<RecordItem[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const primaryColor = myTeam?.colors.primary || '#FF7E67';
 
     // Modal state for editing
     const [editModalVisible, setEditModalVisible] = useState(false);
@@ -124,7 +127,6 @@ export default function HomeScreen() {
     };
 
     const getResultStyle = (result: string | null) => {
-        const primaryColor = myTeam?.colors.primary || '#FF7E67';
         switch (result) {
             case 'WIN':
                 return { bg: `${primaryColor}10`, text: primaryColor };
@@ -143,14 +145,13 @@ export default function HomeScreen() {
             <View className="flex-row items-center justify-between px-6 py-4">
                 <View className="flex-row items-center gap-2">
                     {myTeam ? (
-                        <View
-                            className="w-8 h-8 rounded-full items-center justify-center"
-                            style={{ backgroundColor: myTeam.colors.primary }}
-                        >
-                            <Text className="text-white text-xs font-bold">
-                                {myTeam.name.substring(0, 1)}
-                            </Text>
-                        </View>
+                        <TeamLogo
+                            teamName={myTeam.name}
+                            teamCode={myTeam.code}
+                            primaryColor={myTeam.colors.primary}
+                            size={32}
+                            fontSize={14}
+                        />
                     ) : (
                         <View className="w-8 h-8 rounded-full bg-gray-200" />
                     )}
@@ -170,7 +171,7 @@ export default function HomeScreen() {
 
                 {loading ? (
                     <View className="flex-1 items-center justify-center py-16">
-                        <ActivityIndicator size="large" color="#FF7E67" />
+                        <ActivityIndicator size="large" color={primaryColor} />
                     </View>
                 ) : records.length === 0 ? (
                     /* Empty State */
@@ -226,7 +227,7 @@ export default function HomeScreen() {
                                             className="font-quicksand-bold"
                                             style={{
                                                 fontSize: 24,
-                                                color: record.resultSnapshot === 'WIN' ? (myTeam?.colors.primary || '#FF7E67') : '#1F2937',
+                                                color: record.resultSnapshot === 'WIN' ? primaryColor : '#1F2937',
                                             }}
                                         >
                                             {record.awayScore} : {record.homeScore}

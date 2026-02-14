@@ -139,15 +139,17 @@ export default function RecordModal({
     };
 
 
+    const primaryColor = myTeam?.colors.primary || '#FF7E67';
+
     const resultColor =
         result === 'WIN'
-            ? '#FF7E67'
+            ? primaryColor
             : result === 'LOSE'
                 ? '#9CA3AF'
                 : '#6B7280';
     const resultBg =
         result === 'WIN'
-            ? '#FFF7ED'
+            ? `${primaryColor}10`
             : result === 'LOSE'
                 ? '#F3F4F6'
                 : '#F9FAFB';
@@ -217,7 +219,7 @@ export default function RecordModal({
                                                 style={{
                                                     fontSize: 36,
                                                     lineHeight: 42,
-                                                    color: result === 'WIN' ? '#FF7E67' : '#1F2937',
+                                                    color: result === 'WIN' ? primaryColor : '#1F2937',
                                                     letterSpacing: 4,
                                                 }}
                                             >
@@ -274,13 +276,13 @@ export default function RecordModal({
                                         className="flex-1 py-3 rounded-xl items-center"
                                         style={{
                                             borderWidth: 2,
-                                            borderColor: selectedTeamId === game.away_team_id ? '#FF7E67' : '#E5E7EB',
-                                            backgroundColor: selectedTeamId === game.away_team_id ? '#FFF7ED' : '#FFFFFF',
+                                            borderColor: selectedTeamId === game.away_team_id ? primaryColor : '#E5E7EB',
+                                            backgroundColor: selectedTeamId === game.away_team_id ? `${primaryColor}10` : '#FFFFFF',
                                         }}
                                     >
                                         <View
                                             className="w-10 h-10 rounded-full items-center justify-center mb-1"
-                                            style={{ backgroundColor: selectedTeamId === game.away_team_id ? '#FF7E67' : '#E5E7EB' }}
+                                            style={{ backgroundColor: selectedTeamId === game.away_team_id ? primaryColor : '#E5E7EB' }}
                                         >
                                             <Text
                                                 className="font-quicksand-bold text-xs"
@@ -291,7 +293,7 @@ export default function RecordModal({
                                         </View>
                                         <Text
                                             className="font-quicksand-bold text-sm"
-                                            style={{ color: selectedTeamId === game.away_team_id ? '#FF7E67' : '#6B7280' }}
+                                            style={{ color: selectedTeamId === game.away_team_id ? primaryColor : '#6B7280' }}
                                         >
                                             {game.away_team?.name}
                                         </Text>
@@ -303,13 +305,13 @@ export default function RecordModal({
                                         className="flex-1 py-3 rounded-xl items-center"
                                         style={{
                                             borderWidth: 2,
-                                            borderColor: selectedTeamId === game.home_team_id ? '#FF7E67' : '#E5E7EB',
-                                            backgroundColor: selectedTeamId === game.home_team_id ? '#FFF7ED' : '#FFFFFF',
+                                            borderColor: selectedTeamId === game.home_team_id ? primaryColor : '#E5E7EB',
+                                            backgroundColor: selectedTeamId === game.home_team_id ? `${primaryColor}10` : '#FFFFFF',
                                         }}
                                     >
                                         <View
                                             className="w-10 h-10 rounded-full items-center justify-center mb-1"
-                                            style={{ backgroundColor: selectedTeamId === game.home_team_id ? '#FF7E67' : '#E5E7EB' }}
+                                            style={{ backgroundColor: selectedTeamId === game.home_team_id ? primaryColor : '#E5E7EB' }}
                                         >
                                             <Text
                                                 className="font-quicksand-bold text-xs"
@@ -320,7 +322,7 @@ export default function RecordModal({
                                         </View>
                                         <Text
                                             className="font-quicksand-bold text-sm"
-                                            style={{ color: selectedTeamId === game.home_team_id ? '#FF7E67' : '#6B7280' }}
+                                            style={{ color: selectedTeamId === game.home_team_id ? primaryColor : '#6B7280' }}
                                         >
                                             {game.home_team?.name}
                                         </Text>
@@ -423,7 +425,7 @@ export default function RecordModal({
                         <TouchableOpacity
                             onPress={handleSave}
                             className="py-4 rounded-2xl items-center"
-                            style={{ backgroundColor: '#FF7E67' }}
+                            style={{ backgroundColor: primaryColor }}
                             activeOpacity={0.85}
                         >
                             <Text className="text-white font-quicksand-bold text-base">
