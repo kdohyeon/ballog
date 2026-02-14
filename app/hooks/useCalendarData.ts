@@ -22,6 +22,7 @@ export interface CalendarGame {
         primary_color: string;
     };
     stadium_id: string;
+    stadium_name: string;
     record?: {
         id: string;
         seatInfo: string | null;
@@ -50,42 +51,27 @@ export type MarkedDates = {
     [date: string]: MarkedDateDetails;
 };
 
-export function useCalendarData() {
+export function useCalendarData(year?: number, month?: number) {
     const { memberId } = useAuthStore();
     const [games, setGames] = useState<CalendarGame[]>([]);
     const [markedDates, setMarkedDates] = useState<MarkedDates>({});
     const [loading, setLoading] = useState(true);
 
     const fetchData = useCallback(async () => {
-        console.log('fetchData called, memberId:', memberId);
+        console.log('fetchData called, year:', year, 'month:', month, 'memberId:', memberId);
         setLoading(true);
         try {
-            // 1. Fetch KBO games for 2025 and 2026 (March to October) from backend
-            const years = [2025, 2026];
-            const months = [3, 4, 5, 6, 7, 8, 9, 10];
+            // 1. Fetch KBO games for specific year and month from backend
+            const currentYear = year || new Date().getFullYear();
+            const currentMonth = month || (new Date().getMonth() + 1);
 
-            console.log(`Starting to fetch games for years: ${years} and months: ${months}`);
+            console.log(`Starting to fetch games for year: ${currentYear} and month: ${currentMonth}`);
 
-            const fetchPromises: Promise<any[]>[] = [];
-            years.forEach(year => {
-                months.forEach(month => {
-                    const url = `http://localhost:8080/api/v1/games/monthly?year=${year}&month=${month}`;
-                    fetchPromises.push(
-                        fetch(url)
-                            .then(res => {
-                                console.log(`Fetched ${url}, status: ${res.status}`);
-                                return res.ok ? res.json() : [];
-                            })
-                            .catch(err => {
-                                console.error(`Error fetching ${url}:`, err);
-                                return [];
-                            })
-                    );
-                });
-            });
+            const url = `http://localhost:8080/api/v1/games/monthly?year=${currentYear}&month=${currentMonth}`;
+            const res = await fetch(url);
+            console.log(`Fetched ${url}, status: ${res.status}`);
 
-            const allResults = await Promise.all(fetchPromises);
-            const gamesData = allResults.flat();
+            const gamesData = res.ok ? await res.json() : [];
             console.log(`Total games fetched from backend: ${gamesData.length}`);
 
             // 2. Fetch User Records to identify attended games
@@ -102,35 +88,43 @@ export function useCalendarData() {
                 }
             }
 
-            const typedGames = (gamesData as any[] || []).map(game => ({
-                id: game.id,
-                game_date_time: game.gameDateTime,
-                home_team_id: game.homeTeamId,
-                away_team_id: game.awayTeamId,
-                home_score: game.homeScore,
-                away_score: game.awayScore,
-                status: game.status,
-                home_team: {
-                    name: game.homeTeamName,
-                    code: game.homeTeamCode,
-                    primary_color: game.homeTeamPrimaryColor
-                },
-                away_team: {
-                    name: game.awayTeamName,
-                    code: game.awayTeamCode,
-                    primary_color: game.awayTeamPrimaryColor
-                },
-                stadium_id: game.stadiumId,
-                record: attendanceMap.get(game.id)
-                    ? {
-                        id: attendanceMap.get(game.id).id,
-                        seatInfo: attendanceMap.get(game.id).seatInfo,
-                        content: attendanceMap.get(game.id).content,
-                        ticketImageUrl: attendanceMap.get(game.id).ticketImageUrl,
-                        supportedTeamId: attendanceMap.get(game.id).supportedTeamId,
-                    }
-                    : undefined
-            })) as CalendarGame[];
+            const typedGames = (gamesData as any[] || []).map(game => {
+                // Defensive checks for nested objects (handles both old flat format and new nested format during transition)
+                const homeTeam = game.homeTeam || { id: game.homeTeamId, name: game.homeTeamName, code: game.homeTeamCode, primaryColor: game.homeTeamPrimaryColor };
+                const awayTeam = game.awayTeam || { id: game.awayTeamId, name: game.awayTeamName, code: game.awayTeamCode, primaryColor: game.awayTeamPrimaryColor };
+                const stadium = game.stadium || { id: game.stadiumId, name: game.stadiumName };
+
+                return {
+                    id: game.id,
+                    game_date_time: game.gameDateTime,
+                    home_team_id: homeTeam?.id,
+                    away_team_id: awayTeam?.id,
+                    home_score: game.homeScore,
+                    away_score: game.awayScore,
+                    status: game.status,
+                    home_team: {
+                        name: homeTeam?.name || '',
+                        code: homeTeam?.code || '',
+                        primary_color: homeTeam?.primary_color || homeTeam?.primaryColor || ''
+                    },
+                    away_team: {
+                        name: awayTeam?.name || '',
+                        code: awayTeam?.code || '',
+                        primary_color: awayTeam?.primary_color || awayTeam?.primaryColor || ''
+                    },
+                    stadium_id: stadium?.id,
+                    stadium_name: stadium?.name || '',
+                    record: attendanceMap.get(game.id)
+                        ? {
+                            id: attendanceMap.get(game.id).id,
+                            seatInfo: attendanceMap.get(game.id).seatInfo,
+                            content: attendanceMap.get(game.id).content,
+                            ticketImageUrl: attendanceMap.get(game.id).ticketImageUrl,
+                            supportedTeamId: attendanceMap.get(game.id).supportedTeamId,
+                        }
+                        : undefined
+                };
+            }) as CalendarGame[];
 
             setGames(typedGames);
 
@@ -160,7 +154,7 @@ export function useCalendarData() {
         } finally {
             setLoading(false);
         }
-    }, [memberId]);
+    }, [memberId, year, month]);
 
     useEffect(() => {
         fetchData();

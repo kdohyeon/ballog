@@ -35,16 +35,27 @@ class GameController(
                 id = it.id!!,
                 gameDateTime = it.gameDateTime,
                 gameId = it.gameId,
-                homeTeamId = it.homeTeam.id!!,
-                awayTeamId = it.awayTeam.id!!,
-                homeTeamName = it.homeTeam.name,
-                homeTeamCode = it.homeTeam.code,
-                homeTeamPrimaryColor = it.homeTeam.primaryColor,
-                awayTeamName = it.awayTeam.name,
-                awayTeamCode = it.awayTeam.code,
-                awayTeamPrimaryColor = it.awayTeam.primaryColor,
-                stadiumId = it.stadium.id!!,
-                stadiumName = it.stadium.name,
+                homeTeam = com.ballog.backend.dto.TeamResponse(
+                    id = it.homeTeam.id!!,
+                    name = it.homeTeam.name,
+                    shortName = it.homeTeam.shortName,
+                    code = it.homeTeam.code,
+                    logoUrl = it.homeTeam.logoUrl,
+                    primaryColor = it.homeTeam.primaryColor
+                ),
+                awayTeam = com.ballog.backend.dto.TeamResponse(
+                    id = it.awayTeam.id!!,
+                    name = it.awayTeam.name,
+                    shortName = it.awayTeam.shortName,
+                    code = it.awayTeam.code,
+                    logoUrl = it.awayTeam.logoUrl,
+                    primaryColor = it.awayTeam.primaryColor
+                ),
+                stadium = com.ballog.backend.dto.StadiumResponse(
+                    id = it.stadium.id!!,
+                    name = it.stadium.name,
+                    weatherKeyword = it.stadium.weatherKeyword
+                ),
                 homeScore = it.homeScore,
                 awayScore = it.awayScore,
                 status = it.status

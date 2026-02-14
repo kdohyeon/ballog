@@ -6,4 +6,5 @@ import java.util.UUID
 
 interface StadiumRepository : JpaRepository<Stadium, UUID> {
     fun findByName(name: String): Stadium?
+    fun findFirstByNameContaining(name: String): Stadium?
 }

@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Trash2 } from 'lucide-react-native';
 import { useTeamStore } from '../../store/useTeamStore';
@@ -176,12 +176,13 @@ export default function HomeScreen() {
                 ) : records.length === 0 ? (
                     /* Empty State */
                     <View className="mx-4 rounded-2xl py-12 items-center" style={{ backgroundColor: '#F9FAFB' }}>
-                        <Text style={{ fontSize: 40 }}>⚾</Text>
-                        <Text className="font-quicksand-bold text-gray-400 text-base mt-3">
-                            최근 기록이 없습니다
-                        </Text>
-                        <Text className="font-quicksand-medium text-gray-300 text-sm mt-1">
-                            캘린더에서 경기를 눌러 기록해보세요!
+                        <Image
+                            source={require('../../assets/images/mascot/ballog_mascot_sad.png')}
+                            className="w-80 h-80"
+                            resizeMode="contain"
+                        />
+                        <Text className="font-quicksand-bold text-gray-700 text-xl mt-4">
+                            배고파요.. 직관 기록을 주세요!
                         </Text>
                     </View>
                 ) : (
@@ -290,7 +291,8 @@ export default function HomeScreen() {
                         status: 'FINISHED' as any,
                         home_team: { name: editingRecord.homeTeamName } as any,
                         away_team: { name: editingRecord.awayTeamName } as any,
-                        stadium_id: ''
+                        stadium_id: '',
+                        stadium_name: ''
                     }}
                     initialData={{
                         id: editingRecord.id,

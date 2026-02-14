@@ -28,6 +28,8 @@ class KboCrawlerService(
     private val restClient = restClientBuilder
         .baseUrl("https://api-gw.sports.naver.com")
         .defaultHeader("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        .defaultHeader("Referer", "https://sports.news.naver.com/kbo/schedule/index")
+        .defaultHeader("Accept", "application/json, text/plain, */*")
         .build()
 
     private val emitters = java.util.concurrent.CopyOnWriteArrayList<org.springframework.web.servlet.mvc.method.annotation.SseEmitter>()
@@ -83,7 +85,7 @@ class KboCrawlerService(
     }
 
     private fun crawlRange(start: LocalDate, end: LocalDate) {
-        val url = "/schedule/games?fields=basic,super_match&baseballScheduleCategory=kbo&categoryId=kbo&fromDate=$start&toDate=$end"
+        val url = "/schedule/games?fields=basic,schedule,baseball,manualRelayUrl&upperCategoryId=kbaseball&fromDate=$start&toDate=$end&size=500"
         logger.info("Crawling range: $start ~ $end")
 
         try {
@@ -94,9 +96,11 @@ class KboCrawlerService(
 
             val games = response?.result?.games ?: emptyList()
             logger.info("Fetched ${games.size} games from Naver Sports ($start ~ $end)")
+            logger.info("Fetched ${games.toString()}")
 
             games.forEach { 
                 try {
+                    logger.info(it.toString())
                     processGame(it)
                 } catch (e: Exception) {
                     logger.error("Failed to process game: ${it.gameId}", e)
@@ -104,42 +108,50 @@ class KboCrawlerService(
             }
             
         } catch (e: Exception) {
-            logger.error("Failed to crawl schedule ($start ~ $end): ${e.message}")
+            logger.error("Failed to crawl schedule ($start ~ $end): ${e.message}", e)
         }
     }
 
     private fun processGame(dto: NaverGameDto) {
-        logger.info("Processing game ${dto.gameId}: ${dto.homeTeamName} vs ${dto.awayTeamName} (Date: ${dto.gameDateTime}, Status: ${dto.statusCode}, Cancel: ${dto.cancel})")
-        val homeTeam = findTeam(dto.homeTeamName)
-        val awayTeam = findTeam(dto.awayTeamName)
+        if (dto.categoryId != "kbo") {
+            logger.debug("Skipping non-KBO entry: ${dto.gameId} / category: ${dto.categoryId}")
+            return
+        }
+        
+        val gameId = dto.gameId ?: return
+        val homeName = dto.homeTeamName ?: return
+        val awayName = dto.awayTeamName ?: return
+        val dtStr = dto.gameDateTime ?: return
+
+        logger.info("Processing game $gameId: $homeName vs $awayName (Date: $dtStr, Status: ${dto.statusCode}, Cancel: ${dto.cancel}, Stadium: ${dto.stadium})")
+        val homeTeam = findTeam(homeName)
+        val awayTeam = findTeam(awayName)
         
         if (homeTeam == null || awayTeam == null) {
-            logger.warn("Skipping game ${dto.gameId}: Teams not found (${dto.homeTeamName} vs ${dto.awayTeamName})")
+            logger.warn("Skipping game $gameId: Teams not found ($homeName vs $awayName)")
             return
         }
 
         // Naver DateTime needs parsing "yyyy-MM-dd'T'HH:mm:ss"
-        val gameDateTime = LocalDateTime.parse(dto.gameDateTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        val gameDateTime = LocalDateTime.parse(dtStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
         
         val existingGame = gameRepository.findByGameDateTimeAndHomeTeamAndAwayTeam(
             gameDateTime, homeTeam, awayTeam
         )
 
-        val status = mapStatus(dto.statusCode, dto.cancel)
+        val status = mapStatus(dto.statusCode ?: "BEFORE", dto.cancel)
         val homeScore = dto.homeTeamScore ?: 0
         val awayScore = dto.awayTeamScore ?: 0
 
         if (existingGame != null) {
             // Upsert: Update status, score, gameId
             logger.debug("Updating game: $gameDateTime ${homeTeam.name} vs ${awayTeam.name}")
-            existingGame.updateResult(homeScore, awayScore, status, dto.gameId)
-            // Stadium update could be optional, but usually fixed. 
-            // If stadium changed (rare), we might check.
+            existingGame.updateResult(homeScore, awayScore, status, gameId)
         } else {
             // New Game
             // Infer stadium name if missing
             val stadiumName = dto.stadium ?: "${homeTeam.name} Home"
-            var stadium = stadiumRepository.findByName(stadiumName)
+            var stadium = stadiumRepository.findFirstByNameContaining(stadiumName)
             if (stadium == null) {
                 logger.info("Creating new stadium: $stadiumName")
                 stadium = com.ballog.backend.entity.Stadium(name = stadiumName)
@@ -149,7 +161,7 @@ class KboCrawlerService(
             logger.info("Creating new game: $gameDateTime ${homeTeam.name} vs ${awayTeam.name}")
             val newGame = Game(
                 gameDateTime = gameDateTime,
-                gameId = dto.gameId,
+                gameId = gameId,
                 homeTeam = homeTeam,
                 awayTeam = awayTeam,
                 stadium = stadium,
@@ -175,20 +187,6 @@ class KboCrawlerService(
     }
 
     private fun findTeam(name: String): Team? {
-        return teamRepository.findByName(name)
-            ?: teamRepository.findByShortName(name)
-            ?: when(name.uppercase()) {
-                "KT" -> teamRepository.findByName("kt wiz")
-                "KIA" -> teamRepository.findByName("KIA Tigers")
-                "SSG" -> teamRepository.findByName("SSG Landers")
-                "NC" -> teamRepository.findByName("NC Dinos")
-                "LG" -> teamRepository.findByName("LG Twins")
-                "두산" -> teamRepository.findByName("Doosan Bears")
-                "키움" -> teamRepository.findByName("Kiwoom Heroes")
-                "롯데" -> teamRepository.findByName("Lotte Giants")
-                "삼성" -> teamRepository.findByName("Samsung Lions")
-                "한화" -> teamRepository.findByName("Hanwha Eagles")
-                else -> null
-            }
+        return teamRepository.findByShortName(name)
     }
 }

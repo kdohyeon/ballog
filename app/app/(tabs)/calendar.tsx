@@ -22,7 +22,9 @@ LocaleConfig.locales['ko'] = {
 LocaleConfig.defaultLocale = 'ko';
 
 export default function CalendarScreen() {
-    const { markedDates, loading, refresh } = useCalendarData();
+    const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+    const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
+    const { markedDates, loading, refresh } = useCalendarData(currentYear, currentMonth);
     const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const { myTeam } = useTeamStore();
     const { memberId } = useAuthStore();
@@ -157,6 +159,10 @@ export default function CalendarScreen() {
                 }}
                 onDayPress={(day: DateData) => {
                     setSelectedDate(day.dateString);
+                }}
+                onMonthChange={(month: DateData) => {
+                    setCurrentYear(month.year);
+                    setCurrentMonth(month.month);
                 }}
                 enableSwipeMonths={true}
             />
