@@ -18,28 +18,28 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="home"
                 options={{
-                    title: 'Home',
+                    title: '홈',
                     tabBarIcon: ({ color }) => <Home color={color} size={24} />,
                 }}
             />
             <Tabs.Screen
                 name="calendar"
                 options={{
-                    title: 'Calendar',
+                    title: '캘린더',
                     tabBarIcon: ({ color }) => <Calendar color={color} size={24} />,
                 }}
             />
             <Tabs.Screen
                 name="stats"
                 options={{
-                    title: 'Stats',
+                    title: '스탯',
                     tabBarIcon: ({ color }) => <PieChart color={color} size={24} />,
                 }}
             />
             <Tabs.Screen
                 name="mypage"
                 options={{
-                    title: 'My Page',
+                    title: '내정보',
                     tabBarIcon: ({ color }) => <User color={color} size={24} />,
                 }}
             />

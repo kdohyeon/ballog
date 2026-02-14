@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { KBO_TEAMS, Team } from '../store/useTeamStore';
+import { useTeamStore, Team } from '../store/useTeamStore';
+import { useEffect } from 'react';
 
 interface TeamGridProps {
     onSelect: (team: Team) => void;
@@ -8,10 +9,16 @@ interface TeamGridProps {
 }
 
 export default function TeamGrid({ onSelect, selectedTeamId }: TeamGridProps) {
+    const { teams, fetchTeams } = useTeamStore();
+
+    useEffect(() => {
+        fetchTeams();
+    }, []);
+
     return (
         <ScrollView showsVerticalScrollIndicator={false}>
             <View className="flex-row flex-wrap justify-between gap-y-4">
-                {KBO_TEAMS.map((team) => (
+                {teams.map((team) => (
                     <TouchableOpacity
                         key={team.id}
                         onPress={() => onSelect(team)}

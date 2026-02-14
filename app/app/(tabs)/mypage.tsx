@@ -31,16 +31,16 @@ export default function MyPage() {
         }
 
         Alert.alert(
-            'Transfer Complete!',
-            `You are now an official fan of ${newTeam.name}.`,
-            [{ text: 'OK' }]
+            '팀 변경 완료!',
+            `이제부터 ${newTeam.name}의 팬입니다.`,
+            [{ text: '확인' }]
         );
     };
 
     if (!myTeam) {
         return (
             <SafeAreaView className="flex-1 bg-white items-center justify-center">
-                <Text>No team selected</Text>
+                <Text>선택된 팀이 없습니다.</Text>
             </SafeAreaView>
         );
     }
@@ -48,7 +48,7 @@ export default function MyPage() {
     return (
         <SafeAreaView className="flex-1 bg-gray-50">
             <View className="flex-1 p-6">
-                <Text className="text-3xl font-quicksand-bold text-gray-900 mb-6">My Page</Text>
+                <Text className="text-3xl font-quicksand-bold text-gray-900 mb-6">내 정보</Text>
 
                 {/* Profile Card */}
                 <View className="bg-white rounded-3xl p-6 shadow-sm flex-row items-center mb-8">
@@ -67,17 +67,17 @@ export default function MyPage() {
                         </Text>
                         <View className="flex-row items-center mb-1">
                             <Text className="text-sm font-quicksand-medium text-gray-500 mr-2">
-                                Current Affiliation
+                                현재 소속
                             </Text>
                             <View className="bg-orange-50 px-2 py-0.5 rounded-full border border-orange-100">
-                                <Text className="text-[10px] font-quicksand-bold text-ballog-orange">Official Fan</Text>
+                                <Text className="text-[10px] font-quicksand-bold text-ballog-orange">공식 팬</Text>
                             </View>
                         </View>
                         <Text className="text-lg font-quicksand-bold text-gray-700 mb-1">
                             {myTeam.name}
                         </Text>
                         <Text className="text-xs text-gray-400 font-quicksand-regular">
-                            Signed since 2026.04
+                            2026.04 시즌권 보유 중
                         </Text>
                     </View>
                 </View>
@@ -93,10 +93,10 @@ export default function MyPage() {
                         </View>
                         <View className="flex-1">
                             <Text className="text-lg font-quicksand-bold text-gray-900">
-                                FA Market
+                                팀 변경
                             </Text>
                             <Text className="text-sm font-quicksand-medium text-gray-500">
-                                Transfer to another team
+                                응원하는 팀을 바꿀 수 있습니다.
                             </Text>
                         </View>
                     </TouchableOpacity>
@@ -106,7 +106,7 @@ export default function MyPage() {
                             <Settings size={20} color="#4B5563" />
                         </View>
                         <Text className="text-lg font-quicksand-medium text-gray-900">
-                            App Settings
+                            앱 설정
                         </Text>
                     </TouchableOpacity>
 
@@ -115,7 +115,7 @@ export default function MyPage() {
                             <LogOut size={20} color="#EF4444" />
                         </View>
                         <Text className="text-lg font-quicksand-medium text-red-500">
-                            Log Out
+                            로그아웃
                         </Text>
                     </TouchableOpacity>
                 </View>
@@ -133,13 +133,13 @@ export default function MyPage() {
                         <View className="p-6 pb-2 items-center">
                             <View className="w-12 h-1.5 bg-gray-200 rounded-full mb-6" />
                             <Text className="text-2xl font-quicksand-bold text-gray-900 mb-2">
-                                2026 FA Market
+                                2026 팀 변경
                             </Text>
                             <Text className="text-base font-quicksand-medium text-gray-500 text-center">
-                                Which team do you want to transfer to?
+                                어느 팀으로 이동하시겠습니까?
                             </Text>
                             <Text className="text-xs text-gray-400 mt-1 mb-6">
-                                (Warning: Existing loyalty points may be reset)
+                                (주의: 기존 응원 점수가 초기화될 수 있습니다)
                             </Text>
                         </View>
 
@@ -155,7 +155,7 @@ export default function MyPage() {
                                 onPress={() => setIsFAModalVisible(false)}
                                 className="w-full py-4 rounded-2xl bg-gray-100 items-center active:bg-gray-200"
                             >
-                                <Text className="font-quicksand-bold text-gray-600 text-lg">Cancel</Text>
+                                <Text className="font-quicksand-bold text-gray-600 text-lg">취소</Text>
                             </TouchableOpacity>
                         </View>
                     </View>

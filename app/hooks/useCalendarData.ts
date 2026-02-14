@@ -49,23 +49,36 @@ export function useCalendarData() {
     const [loading, setLoading] = useState(true);
 
     const fetchData = useCallback(async () => {
+        console.log('fetchData called, memberId:', memberId);
         setLoading(true);
         try {
-            // 1. Fetch ALL KBO games for the year
-            const startOfYear = '2026-01-01T00:00:00+09:00';
-            const endOfYear = '2026-12-31T23:59:59+09:00';
+            // 1. Fetch KBO games for 2025 and 2026 (March to October) from backend
+            const years = [2025, 2026];
+            const months = [3, 4, 5, 6, 7, 8, 9, 10];
 
-            const { data: gamesData, error: gamesError } = await supabase
-                .from('games')
-                .select(`
-                    *,
-                    home_team:teams!home_team_id(name),
-                    away_team:teams!away_team_id(name)
-                `)
-                .gte('game_date_time', startOfYear)
-                .lte('game_date_time', endOfYear);
+            console.log(`Starting to fetch games for years: ${years} and months: ${months}`);
 
-            if (gamesError) throw gamesError;
+            const fetchPromises: Promise<any[]>[] = [];
+            years.forEach(year => {
+                months.forEach(month => {
+                    const url = `http://localhost:8080/api/v1/games/monthly?year=${year}&month=${month}`;
+                    fetchPromises.push(
+                        fetch(url)
+                            .then(res => {
+                                console.log(`Fetched ${url}, status: ${res.status}`);
+                                return res.ok ? res.json() : [];
+                            })
+                            .catch(err => {
+                                console.error(`Error fetching ${url}:`, err);
+                                return [];
+                            })
+                    );
+                });
+            });
+
+            const allResults = await Promise.all(fetchPromises);
+            const gamesData = allResults.flat();
+            console.log(`Total games fetched from backend: ${gamesData.length}`);
 
             // 2. Fetch User Records to identify attended games
             let attendanceMap: Map<string, any> = new Map();
@@ -82,7 +95,16 @@ export function useCalendarData() {
             }
 
             const typedGames = (gamesData as any[] || []).map(game => ({
-                ...game,
+                id: game.id,
+                game_date_time: game.gameDateTime,
+                home_team_id: game.homeTeamId,
+                away_team_id: game.awayTeamId,
+                home_score: game.homeScore,
+                away_score: game.awayScore,
+                status: game.status,
+                home_team: { name: game.homeTeamName },
+                away_team: { name: game.awayTeamName },
+                stadium_id: game.stadiumId,
                 record: attendanceMap.get(game.id)
                     ? {
                         id: attendanceMap.get(game.id).id,
@@ -114,6 +136,8 @@ export function useCalendarData() {
             });
 
             setMarkedDates(newMarkedDates);
+            console.log(`Marked ${Object.keys(newMarkedDates).length} dates on calendar.`);
+
 
         } catch (e) {
             console.error('Error fetching calendar data:', e);
