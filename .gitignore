@@ -24,3 +24,5 @@ yarn-error.log*
 
 # Project specific
 PROJECT_CONTEXT.md
+games_apr.json
+sse_output.txt
