@@ -3,6 +3,8 @@ package com.ballog.backend.entity
 import jakarta.persistence.*
 import java.time.LocalDateTime
 import java.util.UUID
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 
 @Entity
 @Table(
@@ -37,7 +39,8 @@ class Game(
     var awayScore: Int = 0,
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "game_status")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     var status: GameStatus = GameStatus.SCHEDULED
 ) {
     @Id
