@@ -69,9 +69,17 @@ export default function CalendarScreen() {
     const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const { myTeam } = useTeamStore();
 
-    // Get games for selected date
+    // Get games for selected date, with preferred team's games first
     const selectedDateData = markedDates[selectedDate];
-    const gamesForDate = selectedDateData?.games || [];
+    const gamesForDate = [...(selectedDateData?.games || [])].sort((a, b) => {
+        const myTeamName = myTeam?.name?.toLowerCase();
+        if (!myTeamName) return 0;
+        const aIsMyTeam = a.home_team?.name?.toLowerCase().includes(myTeamName) || a.away_team?.name?.toLowerCase().includes(myTeamName);
+        const bIsMyTeam = b.home_team?.name?.toLowerCase().includes(myTeamName) || b.away_team?.name?.toLowerCase().includes(myTeamName);
+        if (aIsMyTeam && !bIsMyTeam) return -1;
+        if (!aIsMyTeam && bIsMyTeam) return 1;
+        return 0;
+    });
 
     if (loading && !markedDates) {
         return (
