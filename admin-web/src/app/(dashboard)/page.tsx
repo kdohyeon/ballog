@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Card, DatePicker, Button, Table, Tag, Space, message, Row, Col } from 'antd';
+import { Card, DatePicker, Button, Table, Tag, Space, message, Row, Col, Modal, Progress } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
@@ -16,6 +16,11 @@ export default function Dashboard() {
     const [crawlRange, setCrawlRange] = useState<[Dayjs, Dayjs] | null>(null);
     const [viewMonth, setViewMonth] = useState<Dayjs>(dayjs());
 
+    // Progress State
+    const [isCrawling, setIsCrawling] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const [progressMessage, setProgressMessage] = useState('');
+
     // Mutation for Crawling
     const crawlMutation = useMutation({
         mutationFn: async () => {
@@ -23,15 +28,48 @@ export default function Dashboard() {
             const [start, end] = crawlRange;
             return crawlSchedule(start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD'));
         },
-        onSuccess: () => {
-            message.success('크롤링 작업이 시작되었습니다.');
-            // Invalidate queries to refresh data
-            queryClient.invalidateQueries({ queryKey: ['games'] });
-        },
         onError: (error) => {
             message.error(`크롤링 실패: ${error.message}`);
+            setIsCrawling(false);
         },
     });
+
+    const handleCrawl = () => {
+        if (!crawlRange) {
+            message.warning('크롤링할 기간을 선택해주세요.');
+            return;
+        }
+
+        setIsCrawling(true);
+        setProgress(0);
+        setProgressMessage('크롤링 준비 중...');
+
+        // Start SSE connection
+        const eventSource = new EventSource('http://localhost:8080/api/v1/admin/crawl/progress');
+
+        eventSource.addEventListener('progress', (event) => {
+            const data = JSON.parse(event.data);
+            setProgress(data.percent);
+            setProgressMessage(data.message);
+
+            if (data.percent === 100) {
+                eventSource.close();
+                message.success('크롤링이 완료되었습니다.');
+                setIsCrawling(false);
+                queryClient.invalidateQueries({ queryKey: ['games'] });
+            }
+        });
+
+        eventSource.onerror = () => {
+            eventSource.close();
+            // Don't close modal on error immediately, let user see it (or close if appropriate)
+            // But usually error means connection lost.
+            // For now, we rely on the mutation error for actual API failure.
+        };
+
+        // Trigger Crawl API
+        crawlMutation.mutate();
+    };
 
     // Query for fetching monthly games
     const { data: games, isLoading } = useQuery({
@@ -88,14 +126,6 @@ export default function Dashboard() {
         },
     ];
 
-    const handleCrawl = () => {
-        if (!crawlRange) {
-            message.warning('크롤링할 기간을 선택해주세요.');
-            return;
-        }
-        crawlMutation.mutate();
-    };
-
     return (
         <div className="space-y-6">
             {/* Controls Section */}
@@ -112,7 +142,7 @@ export default function Dashboard() {
                                 <Button
                                     type="primary"
                                     onClick={handleCrawl}
-                                    loading={crawlMutation.isPending}
+                                    loading={isCrawling}
                                     icon={<ReloadOutlined />}
                                 >
                                     크롤링 실행
@@ -146,9 +176,26 @@ export default function Dashboard() {
                     columns={columns}
                     rowKey="id"
                     loading={isLoading}
-                    pagination={{ pageSize: 15 }}
+                    pagination={{
+                        pageSize: 10,
+                        showSizeChanger: true,
+                        showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+                    }}
                 />
             </Card>
+
+            <Modal
+                title="데이터 수집 중..."
+                open={isCrawling}
+                footer={null}
+                closable={false}
+                centered
+            >
+                <div className="text-center py-4">
+                    <Progress type="circle" percent={progress} />
+                    <div className="mt-4 text-gray-600">{progressMessage}</div>
+                </div>
+            </Modal>
         </div>
     );
 }
