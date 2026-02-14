@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, ActivityIndicator, ScrollView } from 'react-native';
 import { Calendar, LocaleConfig, DateData } from 'react-native-calendars';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCalendarData, CalendarGame } from '../../hooks/useCalendarData';
 import { useTeamStore } from '../../store/useTeamStore';
+import MatchCard from '../../components/MatchCard';
 
 // Configure Korean Locale
 LocaleConfig.locales['ko'] = {
@@ -17,68 +18,29 @@ LocaleConfig.locales['ko'] = {
 };
 LocaleConfig.defaultLocale = 'ko';
 
-function GameCard({ game, myTeamId }: { game: CalendarGame; myTeamId?: string }) {
-    const isMyTeamGame = myTeamId && (game.home_team_id === myTeamId || game.away_team_id === myTeamId);
-
-    return (
-        <View
-            className={`rounded-xl shadow-sm border p-4 flex-row items-center justify-between mb-3 ${isMyTeamGame ? 'bg-orange-50 border-ballog-orange/30' : 'bg-white border-gray-100'
-                }`}
-        >
-            {/* Home Team */}
-            <View className="items-center w-1/3">
-                <View className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center mb-1">
-                    <Text className="font-bold text-gray-500 text-xs">{game.home_team?.name?.substring(0, 2)}</Text>
-                </View>
-                <Text className={`font-quicksand-bold text-sm ${isMyTeamGame && game.home_team_id === myTeamId ? 'text-ballog-orange' : 'text-gray-800'}`}>
-                    {game.home_team?.name}
-                </Text>
-            </View>
-
-            {/* Score / Time */}
-            <View className="items-center w-1/3">
-                <View className="px-2 py-0.5 rounded-full mb-1 bg-gray-100">
-                    <Text className="font-bold text-[10px] text-gray-500">
-                        {game.status === 'SCHEDULED' ? format(new Date(game.game_date_time), 'HH:mm') : game.status}
-                    </Text>
-                </View>
-                {(game.home_score !== null && game.away_score !== null) ? (
-                    <Text className="text-xl font-quicksand-bold text-black">
-                        {game.home_score} : {game.away_score}
-                    </Text>
-                ) : (
-                    <Text className="text-xl font-quicksand-bold text-gray-300">VS</Text>
-                )}
-            </View>
-
-            {/* Away Team */}
-            <View className="items-center w-1/3">
-                <View className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center mb-1">
-                    <Text className="font-bold text-gray-500 text-xs">{game.away_team?.name?.substring(0, 2)}</Text>
-                </View>
-                <Text className={`font-quicksand-bold text-sm ${isMyTeamGame && game.away_team_id === myTeamId ? 'text-ballog-orange' : 'text-gray-800'}`}>
-                    {game.away_team?.name}
-                </Text>
-            </View>
-        </View>
-    );
-}
-
 export default function CalendarScreen() {
     const { markedDates, loading } = useCalendarData();
     const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const { myTeam } = useTeamStore();
 
+    // Helper: check if a game involves my team (name-based, since store IDs ≠ DB IDs)
+    const myTeamName = myTeam?.name?.toLowerCase();
+    const isMyTeamGame = (game: CalendarGame) => {
+        if (!myTeamName) return false;
+        return (
+            game.home_team?.name?.toLowerCase().includes(myTeamName) ||
+            game.away_team?.name?.toLowerCase().includes(myTeamName)
+        );
+    };
+
     // Get games for selected date, with preferred team's games first
     const selectedDateData = markedDates[selectedDate];
     const gamesForDate = [...(selectedDateData?.games || [])].sort((a, b) => {
-        const myTeamName = myTeam?.name?.toLowerCase();
-        if (!myTeamName) return 0;
-        const aIsMyTeam = a.home_team?.name?.toLowerCase().includes(myTeamName) || a.away_team?.name?.toLowerCase().includes(myTeamName);
-        const bIsMyTeam = b.home_team?.name?.toLowerCase().includes(myTeamName) || b.away_team?.name?.toLowerCase().includes(myTeamName);
-        if (aIsMyTeam && !bIsMyTeam) return -1;
-        if (!aIsMyTeam && bIsMyTeam) return 1;
-        return 0;
+        const aIsMine = isMyTeamGame(a);
+        const bIsMine = isMyTeamGame(b);
+        if (aIsMine && !bIsMine) return -1;
+        if (!aIsMine && bIsMine) return 1;
+        return new Date(a.game_date_time).getTime() - new Date(b.game_date_time).getTime();
     });
 
     if (loading && !markedDates) {
@@ -132,13 +94,17 @@ export default function CalendarScreen() {
 
                 {gamesForDate.length > 0 ? (
                     <ScrollView showsVerticalScrollIndicator={false}>
-                        {gamesForDate.map((game) => (
-                            <GameCard
-                                key={game.id}
-                                game={game}
-                                myTeamId={myTeam?.id}
-                            />
-                        ))}
+                        {gamesForDate.map((game) => {
+                            const isMyMatch = isMyTeamGame(game);
+                            return (
+                                <MatchCard
+                                    key={game.id}
+                                    game={game}
+                                    isMyMatch={isMyMatch}
+                                    myTeamName={myTeamName}
+                                />
+                            );
+                        })}
                         <View className="h-4" />
                     </ScrollView>
                 ) : (
